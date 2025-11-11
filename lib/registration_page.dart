@@ -93,7 +93,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const Icon(
                   Icons.person_add_alt_1,
                   size: 60,
-                  color: Colors.blueAccent,
+                  color: Colors.pinkAccent,
                 ),
                 const SizedBox(height: 16),
                 const Text(
@@ -143,7 +143,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     : ElevatedButton(
                         onPressed: _registerUser,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent.shade700,
+                          backgroundColor: Colors.pinkAccent.shade700,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           textStyle: const TextStyle(
