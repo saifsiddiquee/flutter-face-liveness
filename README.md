@@ -39,7 +39,7 @@ the instructions on the [Flutter website](https://flutter.dev/docs/get-started/i
 **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/liveness_app.git
+   git clone https://github.com/saifsiddiquee/liveness_app.git
    ```
 
 **Navigate to the project directory:**
