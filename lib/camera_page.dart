@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
+import 'package:liveness_app/profile_page.dart';
 import 'package:liveness_app/registration_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'models/user_profile.dart';
+import 'services/database_service.dart';
 import 'services/tf_lite_service.dart';
 import 'util/image_converter.dart';
 
@@ -40,8 +43,8 @@ class _CameraPageState extends State<CameraPage> {
   LivenessStep _currentStep = LivenessStep.initial;
   String _instructionText = 'Please look at the camera';
 
-  // --- TFLite Service ---
   final TfliteService _tfliteService = TfliteService();
+  final DatabaseService _databaseService = DatabaseService();
 
   // --- Orientation ---
   DeviceOrientation _deviceOrientation = DeviceOrientation.portraitUp;
@@ -284,22 +287,40 @@ class _CameraPageState extends State<CameraPage> {
         _instructionText = 'Verification Complete!';
       });
 
+      // 5. Find a matching user
+      final UserProfile? matchingUser = _databaseService.findMatchingUser(
+        faceEmbedding,
+      );
+
       // Show a success message and navigate
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Liveness check successful!'),
+          SnackBar(
+            content: Text(
+              matchingUser != null
+                  ? 'Welcome back, ${matchingUser.name}!'
+                  : 'Liveness check successful!',
+            ),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Navigate to registration page and pass the embedding
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) =>
-                RegistrationPage(faceEmbedding: faceEmbedding),
-          ),
-        );
+        if (matchingUser != null) {
+          // --- User Found ---
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(user: matchingUser),
+            ),
+          );
+        } else {
+          // --- New User ---
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) =>
+                  RegistrationPage(faceEmbedding: faceEmbedding),
+            ),
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error during processing: $e');

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:liveness_app/home_page.dart';
 import 'package:liveness_app/models/user_profile.dart';
+import 'package:liveness_app/services/database_service.dart';
 
 class RegistrationPage extends StatefulWidget {
-  // We now accept the face embedding from the camera page
   final List<double> faceEmbedding;
 
   const RegistrationPage({super.key, required this.faceEmbedding});
@@ -21,12 +20,54 @@ class _RegistrationPageState extends State<RegistrationPage> {
   String? _selectedGender;
   bool _isLoading = false;
 
-  late final Box<UserProfile> _userBox;
+  final DatabaseService _databaseService = DatabaseService();
 
-  @override
-  void initState() {
-    super.initState();
-    _userBox = Hive.box<UserProfile>('userBox');
+  Future<void> _registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final newUser = UserProfile(
+          name: _nameController.text,
+          email: _emailController.text,
+          gender: _selectedGender!,
+          contactNumber: _contactController.text,
+          faceEmbedding: widget.faceEmbedding,
+        );
+
+        // Save to Hive
+        await _databaseService.saveUser(newUser);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration Successful!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Navigate to home page and clear the stack
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomePage()),
+            (Route<dynamic> route) => false,
+          );
+        }
+      } catch (e) {
+        setState(() {
+          _isLoading = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registration Failed: $e'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    }
   }
 
   @override
@@ -37,96 +78,36 @@ class _RegistrationPageState extends State<RegistrationPage> {
     super.dispose();
   }
 
-  Future<void> _onSave() async {
-    // 1. Validate the form
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    // 2. Create the UserProfile object
-    final newUser = UserProfile(
-      name: _nameController.text,
-      email: _emailController.text,
-      gender: _selectedGender!,
-      contactNumber: _contactController.text,
-      faceEmbedding: widget.faceEmbedding,
-    );
-
-    // 3. Save to Hive. We will use the email as a unique key for simplicity
-    // This also handles updates if the email already exists.
-    try {
-      await _userBox.put(newUser.email, newUser);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration Successful!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // 4. Navigate back to Home Page
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomePage()),
-          (route) => false, // Remove all previous routes
-        );
-      }
-    } catch (e) {
-      debugPrint('Failed to save user: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save data: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Enter Your Details'),
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBar(title: const Text('Complete Your Profile')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Icon(
                   Icons.person_add_alt_1,
                   size: 60,
-                  color: Colors.pinkAccent,
+                  color: Colors.blueAccent,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 const Text(
-                  'Registration Form',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  'Liveness check complete. Please fill in your details to register.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 32),
                 _buildTextFormField(
                   controller: _nameController,
                   labelText: 'Full Name',
                   icon: Icons.person,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter a name'
-                      : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter your name' : null,
                 ),
                 const SizedBox(height: 20),
                 _buildTextFormField(
@@ -135,8 +116,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   icon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an email';
+                    if (value!.isEmpty) {
+                      return 'Please enter your email';
                     }
                     if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
                       return 'Please enter a valid email';
@@ -150,50 +131,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   labelText: 'Contact Number',
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter a number'
+                  validator: (value) => value!.isEmpty
+                      ? 'Please enter your contact number'
                       : null,
                 ),
                 const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  decoration: const InputDecoration(
-                    labelText: 'Gender',
-                    prefixIcon: Icon(Icons.wc),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
-                    ),
-                  ),
-                  items: ['Male', 'Female', 'Other']
-                      .map(
-                        (gender) => DropdownMenuItem(
-                          value: gender,
-                          child: Text(gender),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedGender = value;
-                    });
-                  },
-                  validator: (value) =>
-                      value == null ? 'Please select a gender' : null,
-                ),
+                _buildGenderDropdown(),
                 const SizedBox(height: 40),
                 _isLoading
-                    ? const CircularProgressIndicator()
-                    : ElevatedButton.icon(
-                        onPressed: _onSave,
-                        icon: const Icon(Icons.save),
-                        label: const Text('Save & Register'),
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        onPressed: _registerUser,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pinkAccent.shade700,
+                          backgroundColor: Colors.blueAccent.shade700,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 40,
-                            vertical: 16,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           textStyle: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -202,6 +154,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             borderRadius: BorderRadius.circular(30),
                           ),
                         ),
+                        child: const Text('Register'),
                       ),
               ],
             ),
@@ -216,22 +169,42 @@ class _RegistrationPageState extends State<RegistrationPage> {
     required String labelText,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
+    required String? Function(String?) validator,
   }) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: Icon(icon),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
         fillColor: Colors.white,
       ),
       keyboardType: keyboardType,
       validator: validator,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: 'Gender',
+        prefixIcon: const Icon(Icons.wc),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+      initialValue: _selectedGender,
+      hint: const Text('Select Gender'),
+      items: ['Male', 'Female', 'Other', 'Prefer not to say']
+          .map((gender) => DropdownMenuItem(value: gender, child: Text(gender)))
+          .toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedGender = value;
+        });
+      },
+      validator: (value) => value == null ? 'Please select a gender' : null,
     );
   }
 }
