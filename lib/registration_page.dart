@@ -46,7 +46,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
         );
 
         // Save to Hive
-        await _databaseService.saveUser(newUser);
+        await _databaseService.addUser(newUser);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

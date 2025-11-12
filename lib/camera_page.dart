@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image/image.dart' as img;
-import 'package:liveness_app/profile_page.dart';
 import 'package:liveness_app/registration_page.dart';
+import 'package:liveness_app/v2/profile_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'models/user_profile.dart';

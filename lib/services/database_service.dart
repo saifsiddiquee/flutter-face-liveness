@@ -19,9 +19,10 @@ class DatabaseService {
   // --- Public Methods ---
 
   /// Saves a new user profile to the Hive database.
-  Future<void> saveUser(UserProfile user) async {
-    // Using email as a key for simplicity, assuming emails are unique
-    await _userBox.put(user.email, user);
+  Future<void> addUser(UserProfile user) async {
+    // Using .add() lets Hive assign an auto-incrementing integer key.
+    // This is more robust than using email as the key.
+    await _userBox.add(user);
   }
 
   /// Retrieves all user profiles from the database.
