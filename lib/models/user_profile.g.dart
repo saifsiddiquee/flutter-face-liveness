@@ -22,13 +22,14 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       gender: fields[2] as String,
       contactNumber: fields[3] as String,
       faceEmbedding: (fields[4] as List).cast<double>(),
+      profileImage: fields[5] as Uint8List,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(3)
       ..write(obj.contactNumber)
       ..writeByte(4)
-      ..write(obj.faceEmbedding);
+      ..write(obj.faceEmbedding)
+      ..writeByte(5)
+      ..write(obj.profileImage);
   }
 
   @override

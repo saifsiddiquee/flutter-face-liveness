@@ -15,13 +15,17 @@ class ProfilePage extends StatelessWidget {
         automaticallyImplyLeading: false, // Remove back button
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(Icons.how_to_reg, size: 80, color: Colors.green.shade700),
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: MemoryImage(user.profileImage),
+                backgroundColor: Colors.grey.shade200,
+              ),
               const SizedBox(height: 20),
               Text(
                 'Welcome Back, ${user.name}!',

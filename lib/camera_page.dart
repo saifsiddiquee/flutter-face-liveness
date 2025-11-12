@@ -266,6 +266,23 @@ class _CameraPageState extends State<CameraPage> {
         return;
       }
 
+      // --- 3. FIX IMAGE ROTATION ---
+      // The image from the camera is landscape, but the preview is portrait.
+      // We need to rotate the image to match what the user sees.
+      final img.Image rotatedImage;
+      final camera = _frontCamera!;
+      final sensorOrientation = camera.sensorOrientation;
+
+      if (Platform.isAndroid) {
+        // For Android, we rotate left by 90 degrees and then flip horizontally
+        // if the sensor is 270 (which is common for front cameras).
+        rotatedImage = img.copyRotate(rgbImage, angle: -90);
+      } else if (Platform.isIOS) {
+        rotatedImage = rgbImage; // iOS image is already correctly oriented
+      } else {
+        rotatedImage = rgbImage;
+      }
+
       // 2. Crop the face from the image
       final Rect boundingBox = _capturedFace!.boundingBox;
       final img.Image croppedFace = img.copyCrop(
@@ -274,6 +291,11 @@ class _CameraPageState extends State<CameraPage> {
         y: boundingBox.top.toInt(),
         width: boundingBox.width.toInt(),
         height: boundingBox.height.toInt(),
+      );
+
+      // --- 2. CONVERT CROPPED FACE TO PNG BYTES ---
+      final Uint8List profileImageBytes = ImageConverter.convertImageToPng(
+        rotatedImage,
       );
 
       // 3. Run TFLite inference to get the embedding
@@ -316,8 +338,10 @@ class _CameraPageState extends State<CameraPage> {
           // --- New User ---
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) =>
-                  RegistrationPage(faceEmbedding: faceEmbedding),
+              builder: (context) => RegistrationPage(
+                faceEmbedding: faceEmbedding,
+                profileImageBytes: profileImageBytes,
+              ),
             ),
           );
         }

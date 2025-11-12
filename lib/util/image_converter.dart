@@ -63,6 +63,10 @@ class ImageConverter {
     }
   }
 
+  static Uint8List convertImageToPng(img.Image image) {
+    return img.encodePng(image);
+  }
+
   // --- Private Conversion Helpers ---
   // MUST BE static methods
   static img.Image _convertYUV420(CameraImage cameraImage) {

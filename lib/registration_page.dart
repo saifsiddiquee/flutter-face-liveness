@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:liveness_app/home_page.dart';
 import 'package:liveness_app/models/user_profile.dart';
@@ -5,8 +7,13 @@ import 'package:liveness_app/services/database_service.dart';
 
 class RegistrationPage extends StatefulWidget {
   final List<double> faceEmbedding;
+  final Uint8List profileImageBytes;
 
-  const RegistrationPage({super.key, required this.faceEmbedding});
+  const RegistrationPage({
+    super.key,
+    required this.faceEmbedding,
+    required this.profileImageBytes,
+  });
 
   @override
   State<RegistrationPage> createState() => _RegistrationPageState();
@@ -35,6 +42,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
           gender: _selectedGender!,
           contactNumber: _contactController.text,
           faceEmbedding: widget.faceEmbedding,
+          profileImage: widget.profileImageBytes,
         );
 
         // Save to Hive
