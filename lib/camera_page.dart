@@ -270,8 +270,8 @@ class _CameraPageState extends State<CameraPage> {
       // The image from the camera is landscape, but the preview is portrait.
       // We need to rotate the image to match what the user sees.
       final img.Image rotatedImage;
-      final camera = _frontCamera!;
-      final sensorOrientation = camera.sensorOrientation;
+      // final camera = _frontCamera!;
+      // final sensorOrientation = camera.sensorOrientation;
 
       if (Platform.isAndroid) {
         // For Android, we rotate left by 90 degrees and then flip horizontally
